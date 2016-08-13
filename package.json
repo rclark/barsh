@@ -1,0 +1,29 @@
+{
+  "name": "barsh",
+  "version": "1.0.0",
+  "description": "For stubbing CLI commands to test your wild and crazy shell scripts",
+  "main": "index.js",
+  "scripts": {
+    "test": "nyc tape test/*.test.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/rclark/barsh.git"
+  },
+  "author": "Ryan Clark",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/rclark/barsh/issues"
+  },
+  "homepage": "https://github.com/rclark/barsh#readme",
+  "devDependencies": {
+    "eslint": "^3.3.0",
+    "nyc": "^7.1.0",
+    "opener": "^1.4.1",
+    "tape": "^4.6.0"
+  },
+  "dependencies": {
+    "mkdirp": "^0.5.1",
+    "rimraf": "^2.5.4"
+  }
+}
