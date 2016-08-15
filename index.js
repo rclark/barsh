@@ -13,11 +13,16 @@ function faker(assert) {
   return assert;
 }
 
-function runner(assert, cmd, files, callback) {
-  var tmp = path.join(os.tmpdir(), crypto.randomBytes(8).toString('hex'));
+function runner(assert, cmd, files, env, callback) {
+  if (typeof env === 'function') {
+    callback = env;
+    env = null;
+  }
 
-  var env = Object.assign({}, process.env, {
-    PATH: [tmp, process.env.PATH].join(':')
+  var tmp = path.join(os.tmpdir(), crypto.randomBytes(8).toString('hex'));
+  env = env ? env : process.env;
+  var runtime = Object.assign({}, env, {
+    PATH: [tmp, env.PATH].join(':')
   });
 
   var assertions = asserter(tmp, assert);
@@ -34,19 +39,31 @@ function runner(assert, cmd, files, callback) {
     return new Promise(function(resolve, reject) {
       mkdirp(tmp, function(err) {
         if (err) return reject(err);
-        Object.keys(files).forEach(function(name) {
-          var file = path.join(tmp, name);
-          fs.writeFileSync(file, files[name].trim());
-          fs.chmodSync(file, '0755');
+
+        Promise.all(Object.keys(files).map(writeFile))
+          .then(resolve, reject);
+      });
+    });
+  }
+
+  function writeFile(name) {
+    var file = path.join(tmp, name);
+    var contents = files[name].trim();
+
+    return new Promise(function(resolve, reject) {
+      fs.writeFile(file, contents, function(err) {
+        if (err) return reject(err);
+        fs.chmod(file, '0755', function(err) {
+          if (err) return reject(err);
+          resolve();
         });
-        resolve();
       });
     });
   }
 
   function runCommand() {
     return new Promise(function(resolve) {
-      exec(cmd, { env: env }, function(err, stdout, stderr) {
+      exec(cmd, { env: runtime }, function(err, stdout, stderr) {
         return resolve({ err, stdout, stderr });
       });
     });
