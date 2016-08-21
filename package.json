@@ -1,6 +1,6 @@
 {
   "name": "barsh",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "description": "For stubbing CLI commands to test your wild and crazy shell scripts",
   "main": "index.js",
   "scripts": {
