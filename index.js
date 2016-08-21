@@ -26,14 +26,18 @@ function runner(assert, cmd, files, env, callback) {
   });
 
   var assertions = asserter(tmp, assert);
-
   files = Object.assign({}, files, { assert: assertions.file });
+
+  var stdout, stderr;
 
   setupFiles()
     .then(runCommand)
     .then(checkAssertions)
     .then(cleanup)
-    .then(runCallback);
+    .then(runCallback)
+    .catch(function(err) {
+      callback(err, stdout, stderr);
+    });
 
   function setupFiles() {
     return new Promise(function(resolve, reject) {
@@ -63,9 +67,16 @@ function runner(assert, cmd, files, env, callback) {
 
   function runCommand() {
     return new Promise(function(resolve) {
-      exec(cmd, { env: runtime }, function(err, stdout, stderr) {
+      var p = exec(cmd, { env: runtime }, function(err, one, two) {
+        stdout = one;
+        stderr = two;
         return resolve({ err, stdout, stderr });
       });
+
+      if (process.env.VERBOSE) {
+        p.stdout.pipe(process.stdout);
+        p.stderr.pipe(process.stderr);
+      }
     });
   }
 
@@ -109,7 +120,11 @@ function asserter(tmp, assert) {
         data.split('\n').forEach(function(line) {
           if (!line) return;
           line = line.split('|');
-          assert[line[0]](line[1], line[2], line[3]);
+          if (line[0] === 'match') {
+            assert.ok((new RegExp(line[2])).test(line[1]), line[3]);
+          } else {
+            assert[line[0]](line[1], line[2], line[3]);
+          }
         });
 
         resolve();
